@@ -1,10 +1,3 @@
-/**
- *	@file: main
- * @
- *	@ 
- *
- */
-
 /**Librerias a incluir*/
 
 #include<stdio.h>
@@ -18,9 +11,14 @@
 
 #include<dirent.h>
 #include<errno.h>
-#include <time.h>
+#include<time.h>
+#include<signal.h>
 
+#include <sys/dir.h>
+#include <sys/syscall.h>
+#include <assert.h>
 
+#define MAX 1000
 
 int main(int argc, char **argv) {
   
@@ -29,6 +27,7 @@ int main(int argc, char **argv) {
   struct stat statbuf;
   
   char *NombreDirectorio = NULL;
+  char NombreDirectorioActual[MAX];
   
   int Tam = -1; /*variable que contendra el size de argv[1]*/
   int i = 0; /*Contador multipropositos*/
@@ -67,28 +66,40 @@ int main(int argc, char **argv) {
   }
   
   /*se lee el contenido del directorio*/
-  while ((direntp = readdir (dirp)) != NULL){
+  for( direntp = readdir (dirp); direntp != NULL; direntp = readdir (dirp)){	 
 	 
-	 
-	 if (stat(direntp->d_name, &statbuf) == 1) {
-		fprintf(stderr, " No se pudo aplicar stat sobre el archivo %s: %s \n", direntp->d_name, strerror(errno));
-		exit(1);
-	 }
-	 if (S_ISDIR(statbuf.st_mode)){
-		printf("%s es un directorio\n",direntp->d_name);
-	 }
-	 else{
-		printf("%s no es un directorio\n", direntp->d_name);
-	 }
-  }
+	 /*Para no caer en ciclo infinito se descartan los directorios "." y ".."*/
+	 if(strcmp (direntp->d_name, ".") != 0 &&  strcmp (direntp->d_name, "..") != 0){
+		
+		/*inicializo la variable en un string vacio*/
+		 for (i = 0; i != MAX; i++) {
+			 NombreDirectorioActual[i] = '\0';
+		 }
+		
+		/*coloco el directorio padre*/
+		strcpy(NombreDirectorioActual, NombreDirectorio);
+		/*añado la direccion del actual*/
+		strcat(NombreDirectorioActual, "/");
+		strcat(NombreDirectorioActual, direntp->d_name);
+		
+		/**/
+		if (lstat(NombreDirectorioActual, &statbuf) == 1) {
+		  fprintf(stderr, " No se pudo aplicar stat sobre el archivo %s: %s \n", direntp->d_name, strerror(errno));
+		  exit(1);
+		}
+		
+		/*verifico si es directorio*/
+		if ( statbuf.st_mode & S_IFDIR){
+		  printf("%s es un directorio\n",direntp->d_name);
+		}
+		else{
+		  printf("%s no es un directorio\n",direntp->d_name);
+		}
+		
+	 }/*fin de if*/
+  }/*fin del for*/
   
-closedir(dirp);
+  closedir(dirp);
 
-
-
-/*
- *	printf("Tamano = %d\n", strlen(NombreDirectorio));
- *	printf("%s\n", NombreDirectorio);
- */
-return 0;
+  return 0;
 }

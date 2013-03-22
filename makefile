@@ -1,7 +1,7 @@
 # Makefile 
 # --O1 -O3 -Wfatal-errors -Werror
 CC = gcc
-CFLAGS = -ansi -Wabi -g -ggdb -gstabs -Wall -Wextra -pedantic -pedantic-errors \
+CFLAGS1 = -ansi -Wabi -g -ggdb -gstabs -Wall -Wextra -pedantic -pedantic-errors \
 	  -Wswitch-default -Wswitch-enum -Wmain \
 	-Wmissing-include-dirs -Wmissing-declarations -Wunreachable-code \
 	-Winline -Wfloat-equal -Wundef -Wcast-align -Wredundant-decls \
@@ -18,7 +18,7 @@ $(PROG): $(OBJS)
 		
 		
 %.o: %.c  
-	$(CC) $(CFLAGS) -c $< -lpthread
+	$(CC) $(CFLAGS) -c $<
 
 .PHONY : clean
 
