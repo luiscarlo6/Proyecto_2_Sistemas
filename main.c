@@ -71,6 +71,7 @@ int main(int argc, char **argv) {
 	 exit(1);
   }
   
+  printf("%s",argv[1]);
   
   Procesar_Directorio(argv[1]);
   
@@ -117,6 +118,7 @@ void Procesar_Directorio(char* Nombre){
   
   DIR *dirp;
   struct dirent *direntp;
+  int K=0;
   
   //char *NombreDirectorio = NULL;
   
@@ -159,7 +161,7 @@ void Procesar_Directorio(char* Nombre){
   }
   
   /*se lee el contenido del directorio*/
-  for( direntp = readdir (dirp); direntp != NULL; direntp = readdir (dirp)){	 
+  for( direntp = readdir (dirp), K=0; direntp != NULL; direntp = readdir (dirp)){	 
 	 
 	 /*Para no caer en ciclo infinito se descartan los directorios "." y ".."*/
 	 if(strcmp (direntp->d_name, ".") != 0 &&  strcmp (direntp->d_name, "..") != 0){
@@ -177,46 +179,67 @@ void Procesar_Directorio(char* Nombre){
 		
 		if(Es_Directorio(NombreDirectorioActual)){
 		  
-		  
+		  printf("SOY \t%s\n",NombreDirectorioActual);
+		  pipe(Array[K].Read);
+		  pipe(Array[K].Write);
+		  NumHijos++;
 		  /*si soy hijo*/
 		  if(fork() == 0 ){
 			 close(Array[NumHijos-1].Read[WRITE]);//cerramos el lado de escritura
 			 close(Array[NumHijos-1].Write[READ]);//cerramos el lado de lectura
 			 
+			 //sleep(5);
 			 fleer = Array[NumHijos-1].Read[READ];
 			 fescribir = Array[NumHijos-1].Write[WRITE];
+			 char TEMP[512];
+			 char Aux[20];
 			 
+			 strcpy(TEMP,"HOLA SOY TU HIJO JEJEJ  ");
+			 sprintf(Aux,"(%d ,%d)",getppid(),getpid());
+			 strcat(TEMP,Aux);
+			 
+			 write(fescribir, TEMP,100);
 			 
 			 read(fleer, buffer, 100);
-			 printf("\n\n\t\tMI mensaje es %s\ty mi padre es:%d\n\n",buffer,getppid());
+			 printf("SOY \t%s\n",NombreDirectorioActual);
+			 printf("\t\tMI mensaje es %s\ty mi padre es:%d\n\n",buffer,getppid());
 			 
 			 NumHijos=0;
-			 
+
 			 Procesar_Directorio(NombreDirectorioActual);
 			 
 			 for(i=0;i!=NumHijos;i++){
 				wait();
 			 }
 			 
-			 //printf("SOY \t%s\n",NombreDirectorio);
+			 
 			 free(NombreDirectorio);
 			 exit(0);
 			 
 		  }else{
-			 NumHijos++;
-			 close(Array[NumHijos-1].Read[READ]);//cerramos el lado de escritura
-			 close(Array[NumHijos-1].Write[WRITE]);//cerramos el lado de lectura
+			 K++;
+
+			 close(Array[K-1].Read[READ]);//cerramos el lado de escritura
+			 close(Array[K-1].Write[WRITE]);//cerramos el lado de lectura
 			 
+			 char AUX[512];
 			   for (i = 0; i != 512; i++) {
 				  buffer[i] = '\0';
+				  AUX[i]='\0';
 				}
+			 sprintf(AUX,"%d",NumHijos);
 			 
 			 strcat(buffer,"HOLA HIJO MIO ");
-			 //char AUX[5];
+
+			 //AUX+=1;
 			 //itoa(NumHijos,AUX,5);
-			 strcat(buffer,convertIC(NumHijos,10));
+			 strcat(buffer,AUX);
 			 //while( (readbytes=read( b[0], buffer, SIZE )) > 0)
-			 write( Array[NumHijos-1].Read[WRITE], buffer, 100 );
+			 printf("VOY A ENVIARLE A MI HIJO %d, \"%s\"\n",K,buffer);
+			 write( Array[K-1].Read[WRITE], buffer, 100 );
+			 read(Array[K-1].Write[READ],buffer,100);
+			 printf("MENSAJE DE MI HIJO\t\"%s\"\n",buffer);
+			 wait();
 			 
 		  }
 		}
