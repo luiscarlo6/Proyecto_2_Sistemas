@@ -19,6 +19,9 @@
 #include <assert.h>
 
 #define MAX 1000
+#define TP 2
+#define READ 0
+#define WRITE 1
 
 char *NombreDirectorio = NULL;
 char NombreDirectorioActual[MAX];
@@ -27,7 +30,22 @@ int Es_Directorio(char* Nombre);
 
 void Procesar_Directorio(char* Nombre);
 
+char *convertIC(int val, int base);
+
 int NumHijos=0;
+
+int fleer = -1;
+int fescribir = -1;
+
+struct Pipe{
+  int Read[TP];
+  int Write[TP];
+};
+
+typedef struct Pipe PIPE;
+
+PIPE Array[20];
+int SIZE=1; 
 
 
 
@@ -46,7 +64,17 @@ int main(int argc, char **argv) {
 	 exit(1);
   }
   
+  //Array = (PIPE *)malloc(SIZE * sizeof(PIPE));
+  
+  if(Array == NULL){
+	 printf("ERROR");
+	 exit(1);
+  }
+  
+  
   Procesar_Directorio(argv[1]);
+  
+  
   
   for(i=0; i!=NumHijos; i++){
 	 wait();
@@ -72,11 +100,11 @@ int Es_Directorio(char* Nombre){
   
   /*verifico si es directorio*/
   if ( statbuf.st_mode & S_IFDIR){
-	 printf("%s\t es un directorio\n",Nombre);
+	 //printf("%s\t es un directorio\n",Nombre);
 	 return 1;
   }
   else{
-	 printf("%s\t no es un directorio\n",Nombre);
+	 //printf("%s\t no es un directorio\n",Nombre);
 	 return 0;
   }
   
@@ -96,6 +124,10 @@ void Procesar_Directorio(char* Nombre){
   int Tam = -1; /*variable que contendra el size de argv[1]*/
   int i = 0; /*Contador multipropositos*/
   int Tam1 = -1; /*variable que contendra el size de NombreDirectorio*/
+  
+  int readbytes;
+  char buffer[512];
+  
   
   Tam = strlen(Nombre);
   
@@ -117,7 +149,7 @@ void Procesar_Directorio(char* Nombre){
   /*Copiamos los n elementos de argv[1] en NombreDirectorio*/
   strncpy(NombreDirectorio, Nombre, Tam);
   
-  printf("HOLA SOY %s\t%d\n",NombreDirectorio,getppid());
+  //printf("HOLA SOY %s\t%d\n",NombreDirectorio,getppid());
   
   
   /*se abre el directorio*/
@@ -145,7 +177,20 @@ void Procesar_Directorio(char* Nombre){
 		
 		if(Es_Directorio(NombreDirectorioActual)){
 		  
+		  
+		  /*si soy hijo*/
 		  if(fork() == 0 ){
+			 close(Array[NumHijos-1].Read[WRITE]);//cerramos el lado de escritura
+			 close(Array[NumHijos-1].Write[READ]);//cerramos el lado de lectura
+			 
+			 fleer = Array[NumHijos-1].Read[READ];
+			 fescribir = Array[NumHijos-1].Write[WRITE];
+			 
+			 
+			 read(fleer, buffer, 100);
+			 printf("\n\n\t\tMI mensaje es %s\ty mi padre es:%d\n\n",buffer,getppid());
+			 
+			 NumHijos=0;
 			 
 			 Procesar_Directorio(NombreDirectorioActual);
 			 
@@ -153,13 +198,25 @@ void Procesar_Directorio(char* Nombre){
 				wait();
 			 }
 			 
-			 printf("SOY \t%s\n",NombreDirectorio);
+			 //printf("SOY \t%s\n",NombreDirectorio);
 			 free(NombreDirectorio);
 			 exit(0);
 			 
 		  }else{
-			 
 			 NumHijos++;
+			 close(Array[NumHijos-1].Read[READ]);//cerramos el lado de escritura
+			 close(Array[NumHijos-1].Write[WRITE]);//cerramos el lado de lectura
+			 
+			   for (i = 0; i != 512; i++) {
+				  buffer[i] = '\0';
+				}
+			 
+			 strcat(buffer,"HOLA HIJO MIO ");
+			 //char AUX[5];
+			 //itoa(NumHijos,AUX,5);
+			 strcat(buffer,convertIC(NumHijos,10));
+			 //while( (readbytes=read( b[0], buffer, SIZE )) > 0)
+			 write( Array[NumHijos-1].Read[WRITE], buffer, 100 );
 			 
 		  }
 		}
@@ -169,3 +226,17 @@ void Procesar_Directorio(char* Nombre){
   
   closedir(dirp);
 }
+
+char *convertIC(int val, int base){
+  static char buf[32] = {0};
+  
+  int i = 30;
+  
+  for(; val && i ; --i, val /= base)
+	 
+	 buf[i] = "0123456789abcdef"[val % base];
+  
+  return &buf[i+1];
+  
+}
+
