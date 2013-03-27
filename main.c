@@ -71,7 +71,8 @@ int main(int argc, char **argv) {
 	 exit(1);
   }
   
-  printf("%s",argv[1]);
+  //printf("\n");
+  //printf("\n%s\n",argv[1]);
   
   Procesar_Directorio(argv[1]);
   
@@ -81,7 +82,7 @@ int main(int argc, char **argv) {
 	 wait();
   }
   
-  printf("SOY EL MAIN \t%s\n",NombreDirectorio);
+  printf("\nSOY EL MAIN \t%s\n",NombreDirectorio);
   
   free(NombreDirectorio);
   
@@ -179,7 +180,7 @@ void Procesar_Directorio(char* Nombre){
 		
 		if(Es_Directorio(NombreDirectorioActual)){
 		  
-		  printf("SOY \t%s\n",NombreDirectorioActual);
+		  printf("\nSOY \t%s\n",NombreDirectorioActual);
 		  pipe(Array[K].Read);
 		  pipe(Array[K].Write);
 		  NumHijos++;
@@ -201,8 +202,8 @@ void Procesar_Directorio(char* Nombre){
 			 write(fescribir, TEMP,100);
 			 
 			 read(fleer, buffer, 100);
-			 printf("SOY \t%s\n",NombreDirectorioActual);
-			 printf("\t\tMI mensaje es %s\ty mi padre es:%d\n\n",buffer,getppid());
+			 //printf("SOY \t%s\n",NombreDirectorioActual);
+			 //printf("\t\tMI mensaje es %s\ty mi padre es:%d\n\n",buffer,getppid());
 			 
 			 NumHijos=0;
 
@@ -235,10 +236,10 @@ void Procesar_Directorio(char* Nombre){
 			 //itoa(NumHijos,AUX,5);
 			 strcat(buffer,AUX);
 			 //while( (readbytes=read( b[0], buffer, SIZE )) > 0)
-			 printf("VOY A ENVIARLE A MI HIJO %d, \"%s\"\n",K,buffer);
+			 //printf("VOY A ENVIARLE A MI HIJO %d, \"%s\"\n",K,buffer);
 			 write( Array[K-1].Read[WRITE], buffer, 100 );
 			 read(Array[K-1].Write[READ],buffer,100);
-			 printf("MENSAJE DE MI HIJO\t\"%s\"\n",buffer);
+			 //printf("MENSAJE DE MI HIJO\t\"%s\"\n",buffer);
 			 wait();
 			 
 		  }
@@ -249,17 +250,3 @@ void Procesar_Directorio(char* Nombre){
   
   closedir(dirp);
 }
-
-char *convertIC(int val, int base){
-  static char buf[32] = {0};
-  
-  int i = 30;
-  
-  for(; val && i ; --i, val /= base)
-	 
-	 buf[i] = "0123456789abcdef"[val % base];
-  
-  return &buf[i+1];
-  
-}
-
